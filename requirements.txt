@@ -1,0 +1,28 @@
+# RAG Pipeline — Python dependencies
+# Install incrementally per phase — do NOT install everything at once.
+#
+# Phase 1 (data models): no installs needed — pure Python stdlib
+# Phase 2 (chunkers + ingestion): pip install chromadb sentence-transformers pymupdf tiktoken
+# Phase 3 (retrieval + LLM): pip install openai
+# Phase 4 (API + MCP): pip install fastapi uvicorn[standard] python-multipart sse-starlette mcp python-dotenv
+# Phase 5 optional (BM25): pip install rank-bm25
+
+# --- Phase 2 ---
+chromadb
+sentence-transformers
+pymupdf
+tiktoken
+
+# --- Phase 3 ---
+openai
+
+# --- Phase 4 ---
+fastapi
+uvicorn[standard]
+python-multipart
+sse-starlette
+mcp
+python-dotenv
+
+# --- Phase 5 (optional) ---
+# rank-bm25
