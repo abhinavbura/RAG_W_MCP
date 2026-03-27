@@ -90,8 +90,20 @@ class PipelineState:
     
     def to_dict(self) -> Dict[str, Any]:
         """Serialize to dictionary, excluding private fields."""
-        result = asdict(self)
-        # Remove private fields
+        # asdict uses deepcopy recursively, which fails on models/db connections.
+        # Temporarily remove them before serialization.
+        temp_model = self._model_instance
+        temp_coll = self._collection
+        self._model_instance = None
+        self._collection = None
+        
+        try:
+            result = asdict(self)
+        finally:
+            self._model_instance = temp_model
+            self._collection = temp_coll
+            
+        # Remove private fields from dict
         result.pop("_model_instance", None)
         result.pop("_collection", None)
         # Convert FileMetadata objects to dicts

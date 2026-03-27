@@ -4,7 +4,7 @@ Scan → Model Selection → Per-File Loop → Finalise
 PipelineState saved after every file — crash recovery by design.
 """
 from pathlib import Path
-from typing import Optional
+from typing import Callable, Optional
 import logging
 from pipeline.state.pipeline_state import PipelineState, FileMetadata
 from pipeline.state.chunking_config import get_config
@@ -19,23 +19,30 @@ from pipeline.ingestion.model_loader import _get_or_load_model, select_model_for
 logger = logging.getLogger(__name__)
 
 
-def ingest_folder(folder_path: str) -> PipelineState:
+def ingest_folder(
+    folder_path: str,
+    progress_callback: Optional[Callable[[dict], None]] = None,
+) -> PipelineState:
     """
     Four-phase ingestion pipeline.
-    
+
     Phase 1 — Scan: Find all files, compute hashes, classify new/changed/unchanged
     Phase 2 — Model: Select embedding model based on cumulative folder size
     Phase 3 — Per-file: Read → detect → chunk → embed → store → archive
     Phase 4 — Finalise: Save hash store, collection count, state
-    
+
     PipelineState is saved after every file — crash recovery by design.
-    
+
     Args:
-        folder_path: Absolute path to dataset/ folder
-        
+        folder_path:       Absolute path to dataset/ folder.
+        progress_callback: Optional callable that receives a dict per event:
+                           per-file: {type, filename, status, chunks_added, error}
+                           final:    {type, total_ingested, total_skipped,
+                                     total_failed, collection_count}
+
     Returns:
         PipelineState with all metadata and session statistics
-        
+
     Raises:
         ValueError: If folder does not exist or is invalid
     """
@@ -65,7 +72,7 @@ def ingest_folder(folder_path: str) -> PipelineState:
         
         # Phase 3 — Per-File Loop
         logger.info(f"Phase 3: Processing {len(state.files_to_ingest)} files...")
-        _phase3_per_file_loop(state, folder_path)
+        _phase3_per_file_loop(state, folder_path, progress_callback)
         logger.info(f"  Ingested: {len(state.ingested_files)}")
         logger.info(f"  Skipped: {len(state.skipped_files)}")
         logger.info(f"  Failed: {len(state.failed_files)}")
@@ -74,6 +81,14 @@ def ingest_folder(folder_path: str) -> PipelineState:
         # Phase 4 — Finalise
         logger.info("Phase 4: Finalizing...")
         _phase4_finalise(state, folder_path)
+        if progress_callback:
+            progress_callback({
+                "type": "summary",
+                "total_ingested": len(state.ingested_files),
+                "total_skipped": len(state.skipped_files),
+                "total_failed": len(state.failed_files),
+                "collection_count": state.collection_count,
+            })
         logger.info(f"  Collection total: {state.collection_count} chunks")
         
         logger.info(f"✓ Ingestion complete (session {state.session_id})")
@@ -222,7 +237,11 @@ def _phase2_model_select(state: PipelineState, folder_path: str) -> None:
         )
 
 
-def _phase3_per_file_loop(state: PipelineState, folder_path: str) -> None:
+def _phase3_per_file_loop(
+    state: PipelineState,
+    folder_path: str,
+    progress_callback: Optional[Callable[[dict], None]] = None,
+) -> None:
     """Phase 3: Per-file processing loop."""
     folder = Path(folder_path)
     
@@ -291,7 +310,7 @@ def _phase3_per_file_loop(state: PipelineState, folder_path: str) -> None:
             # Store new chunks
             state._collection.add(
                 ids=[chunk["id"] for chunk in chunks],
-                embeddings=[list(emb) for emb in embeddings],
+                embeddings=embeddings.tolist(),
                 documents=[chunk["text"] for chunk in chunks],
                 metadatas=[{
                     "source_doc": chunk["source_doc"],
@@ -310,11 +329,27 @@ def _phase3_per_file_loop(state: PipelineState, folder_path: str) -> None:
             state.record_ingested(relative_path, len(chunks))
             state.save(str(folder / ".rag_state.json"))
             logger.info(f"    ✓ {len(chunks)} chunks ingested")
+            if progress_callback:
+                progress_callback({
+                    "type": "file",
+                    "filename": relative_path,
+                    "status": "ingested",
+                    "chunks_added": len(chunks),
+                    "error": "",
+                })
             
         except Exception as e:
             logger.error(f"    ✗ Failed: {str(e)}")
             state.record_failed(relative_path, str(e))
             state.save(str(folder / ".rag_state.json"))
+            if progress_callback:
+                progress_callback({
+                    "type": "file",
+                    "filename": relative_path,
+                    "status": "failed",
+                    "chunks_added": 0,
+                    "error": str(e),
+                })
 
 
 def _phase4_finalise(state: PipelineState, folder_path: str) -> None:

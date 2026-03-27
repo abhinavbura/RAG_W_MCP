@@ -1,7 +1,7 @@
 # Phase 3 — Retrieval & LLM Layer
 
 **Estimated time:** 2–3 days  
-**Status:** 🔴 Not Started  
+**Status:** 🟢 Done  
 **Dependencies:** Phase 1 + Phase 2 complete
 
 ---
@@ -16,100 +16,100 @@ Build the full 7-stage `retrieve()` pipeline, the `LLMRouter`, all embedding hel
 
 ### 3.1 Embedding Helpers
 
-- [ ] `embed_query(query, state)` — applies `query_prefix` if `requires_prefix=True`, single `model.encode()` call
-- [ ] `embed_documents(texts, state)` — applies `doc_prefix` if `requires_prefix=True`, batched encode
-- [ ] Both read model from `state._model_instance`
-- [ ] nomic prefix: `"search_query: "` (query) / `"search_document: "` (doc)
-- [ ] bge-large: no prefix (empty string)
+- [x] `embed_query(query, state)` — applies `query_prefix` if `requires_prefix=True`, single `model.encode()` call
+- [x] `embed_documents(texts, state)` — applies `doc_prefix` if `requires_prefix=True`, batched encode
+- [x] Both read model from `state._model_instance`
+- [x] nomic prefix: `"search_query: "` (query) / `"search_document: "` (doc)
+- [x] bge-large: no prefix (empty string)
 
 ### 3.2 Intent Classification — `_classify_intent()`
 
-- [ ] Regex patterns (already done — verify):
+- [x] Regex patterns (already done — verify):
   - `fact` — specific question words: who, what, when, where, how much, how many, etc.
   - `summary` — summarise, overview, explain, what is, describe
   - `comparison` — compare, difference, vs, versus, better, contrast
   - `conversational` — you, your, that, it, this (pronoun-heavy → follow-up)
-- [ ] LLM fallback (DeepSeek) for ambiguous — returns one of 4 intent strings
-- [ ] Returns intent string, never raises
+- [x] LLM fallback (DeepSeek) for ambiguous — returns one of 4 intent strings
+- [x] Returns intent string, never raises
 
 ### 3.3 Scope Detection — `_detect_scope()`
 
-- [ ] Tokenise each `source_doc` stem from `state.files_metadata` (e.g. `"ml_textbook"` → `["ml","textbook"]`)
-- [ ] Match against query words
-- [ ] Confident match → return `source_doc` string
-- [ ] No match → return `None` (search whole collection)
+- [x] Tokenise each `source_doc` stem from `state.files_metadata` (e.g. `"ml_textbook"` → `["ml","textbook"]`)
+- [x] Match against query words
+- [x] Confident match → return `source_doc` string
+- [x] No match → return `None` (search whole collection)
 
 ### 3.4 Section Extraction — `_extract_sections_llm()`
 
-- [ ] Only called for `comparison` intent
-- [ ] Input: query + list of known section names from ChromaDB metadata
-- [ ] DeepSeek call with system prompt enforcing JSON `{section_a, section_b}`
-- [ ] Both values must exist in known section list
-- [ ] If JSON parse fails or sections not in list → return `None` (fall back to no filter)
+- [x] Only called for `comparison` intent
+- [x] Input: query + list of known section names from ChromaDB metadata
+- [x] DeepSeek call with system prompt enforcing JSON `{section_a, section_b}`
+- [x] Both values must exist in known section list
+- [x] If JSON parse fails or sections not in list → return `None` (fall back to no filter)
 
 ### 3.5 Re-ranker — `_rerank()`
 
-- [ ] Input: list of candidate chunks with cosine similarity scores from ChromaDB
-- [ ] Apply 5 signals per chunk:
+- [x] Input: list of candidate chunks with cosine similarity scores from ChromaDB
+- [x] Apply 5 signals per chunk:
   - `+0.15` if any query word in `section` or `subsection`
   - `+0.05` if `chunk_type = "headed"`
   - `+0.05` if `heading_confidence = "high"`
   - `-0.05` if `position_ratio < 0.05` or `> 0.95`
   - `-0.10` if `token_count > model_ctx_tokens` (from state)
-- [ ] Sort descending by adjusted score
-- [ ] Return sorted list
+- [x] Sort descending by adjusted score
+- [x] Return sorted list
 
 ### 3.6 MMR — `_mmr()`
 
-- [ ] Used only for `summary` intent
-- [ ] Redundancy proxy: section name overlap (no extra embed calls)
-- [ ] `mmr_lambda` from ChunkingConfig (0.7 small → 0.5 large)
-- [ ] `mmr_lambda` controls precision/diversity trade-off
-- [ ] Deduplicates by section after MMR
+- [x] Used only for `summary` intent
+- [x] Redundancy proxy: section name overlap (no extra embed calls)
+- [x] `mmr_lambda` from ChunkingConfig (0.7 small → 0.5 large)
+- [x] `mmr_lambda` controls precision/diversity trade-off
+- [x] Deduplicates by section after MMR
 
 ### 3.7 retrieve() — 7 stages
 
-- [ ] **Stage 0** — `embed_query()` once, reuse vector everywhere
-- [ ] **Stage 1** — `_classify_intent()` → `intent` string
-- [ ] **Stage 2** — `_detect_scope()` → `source_doc` or `None`
-- [ ] **Stage 3** — Build ChromaDB `where` clause:
+- [x] **Stage 0** — `embed_query()` once, reuse vector everywhere
+- [x] **Stage 1** — `_classify_intent()` → `intent` string
+- [x] **Stage 2** — `_detect_scope()` → `source_doc` or `None`
+- [x] **Stage 3** — Build ChromaDB `where` clause:
   - Scope match → `source_doc` filter
   - Comparison → call `_extract_sections_llm()` → two section filters
   - Conversational → collect `excluded_ids` from history
-- [ ] **Stage 4** — ChromaDB cosine search:
+- [x] **Stage 4** — ChromaDB cosine search:
   - summary: fetch k×3 (MMR needs headroom)
   - all others: fetch k×2
   - comparison: two separate queries, merge results
-- [ ] **Stage 5** — `_rerank()` on candidates
-- [ ] **Stage 6** — Intent-specific post-processing:
+- [x] **Stage 5** — `_rerank()` on candidates
+- [x] **Stage 6** — Intent-specific post-processing:
   - fact: top-k by score, no MMR
   - summary: `_mmr()` → deduplicate by section
   - comparison: interleave results from both section queries
   - conversational: drop `excluded_ids`, prepend `recent_chunks(n=2)`, trim to token budget
-- [ ] Return `RetrievalResult` with all 13 fields populated
-- [ ] Start/end timestamps for `latency_ms`
+- [x] Return `RetrievalResult` with all 13 fields populated
+- [x] Start/end timestamps for `latency_ms`
 
 ### 3.8 LLMRouter
 
-- [ ] `LLMRouter(state)` class — reads budget from `state.llm_budget_gpt`
-- [ ] `route(task)` → returns primary + fallback model name
-  - Low complexity tasks (classify, extract, compress) → DeepSeek primary, GPT-4o mini fallback
-  - High complexity (answer generation) → GPT-4o mini primary, DeepSeek fallback
-- [ ] `call(task, prompt, system_prompt=None)` → orchestrates routing + fallback
-- [ ] `_call_deepseek(prompt, system_prompt)` — calls DeepSeek API
-- [ ] `_call_gpt(prompt, system_prompt)` — calls OpenAI API
-- [ ] `_handle_fallback(task, prompt, system_prompt)` — retries on 429 or timeout
-- [ ] Budget check: if `llm_tokens_used_gpt >= llm_budget_gpt` → route all to DeepSeek
-- [ ] On both models fail → raise `LLMUnavailableError`
-- [ ] Update `state.llm_tokens_used_deepseek` / `state.llm_tokens_used_gpt` after every call
-- [ ] Log to `state.llm_calls_by_task`
+- [x] `LLMRouter(state)` class — reads budget from `state.llm_budget_gpt`
+- [x] `route(task)` → returns primary + fallback model name
+  - Low complexity tasks (classify, extract, compress) → OpenRouter (DeepSeek R1) primary, OpenRouter (GPT-4o mini) fallback
+  - High complexity (answer generation) → OpenRouter (GPT-4o mini) primary, OpenRouter (DeepSeek R1) fallback
+- [x] `call(task, prompt, system_prompt=None)` → orchestrates routing + fallback
+- [x] `_call_deepseek(prompt, system_prompt)` — calls OpenRouter API for `deepseek/deepseek-r1`
+- [x] `_call_gpt(prompt, system_prompt)` — calls OpenRouter API for `openai/gpt-4o-mini`
+- [x] `_handle_fallback(task, prompt, system_prompt)` — retries on 429 or timeout
+- [x] Budget check: if `llm_tokens_used_gpt >= llm_budget_gpt` → route all to DeepSeek
+- [x] On both models fail → raise `LLMUnavailableError`
+- [x] Update `state.llm_tokens_used_deepseek` / `state.llm_tokens_used_gpt` after every call
+- [x] Log to `state.llm_calls_by_task`
 
 ### 3.9 Wire ConversationHistory into retrieve()
 
-- [ ] `retrieve(query, state, history: ConversationHistory = None)`
-- [ ] Conversational intent: `history.excluded_ids()` → passed to ChromaDB exclude filter
-- [ ] Conversational intent: `history.recent_chunks(n=2)` → prepended to result
-- [ ] After retrieve: caller responsible for calling `history.add_turn(turn)`
+- [x] `retrieve(query, state, history: ConversationHistory = None)`
+- [x] Conversational intent: `history.excluded_ids()` → passed to ChromaDB exclude filter
+- [x] Conversational intent: `history.recent_chunks(n=2)` → prepended to result
+- [x] After retrieve: caller responsible for calling `history.add_turn(turn)`
 
 ---
 
@@ -190,10 +190,10 @@ print("Multi-turn excluded_ids test passed")
 
 ## Done criteria
 
-- [ ] `retrieve()` returns `RetrievalResult` with all 13 fields for all 4 intents
-- [ ] `_rerank()` scores differ correctly across 5 signals
-- [ ] `_mmr()` produces more diverse results at lower lambda
-- [ ] `LLMRouter` falls back to secondary without raising on 429
-- [ ] Budget exhaustion routes all calls to DeepSeek
-- [ ] Conversational path excludes previously seen chunk IDs
-- [ ] `latency_ms` populated on every result
+- [x] `retrieve()` returns `RetrievalResult` with all 13 fields for all 4 intents
+- [x] `_rerank()` scores differ correctly across 5 signals
+- [x] `_mmr()` produces more diverse results at lower lambda
+- [x] `LLMRouter` falls back to secondary without raising on 429
+- [x] Budget exhaustion routes all calls to DeepSeek
+- [x] Conversational path excludes previously seen chunk IDs
+- [x] `latency_ms` populated on every result

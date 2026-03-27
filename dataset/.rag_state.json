@@ -1,0 +1,75 @@
+{
+  "folder_path": "G:\\scripts\\RAG_W_MCP\\dataset",
+  "total_files": 2,
+  "total_size_chars": 144840,
+  "files_metadata": [
+    {
+      "path": "blinkit_p_clean.md",
+      "file_type": "md",
+      "size_chars": 28160,
+      "hash": "281de7b3e78d83b390e7f2b6bb481dd6",
+      "status": "ingested",
+      "chunks_added": 44,
+      "error": ""
+    },
+    {
+      "path": "blinkit_tnc_clean.md",
+      "file_type": "md",
+      "size_chars": 116680,
+      "hash": "f7a0054c53722bc8a007b3d9c79b3819",
+      "status": "ingested",
+      "chunks_added": 137,
+      "error": ""
+    }
+  ],
+  "files_to_ingest": [
+    "blinkit_p_clean.md",
+    "blinkit_tnc_clean.md"
+  ],
+  "model_key": "nomic",
+  "model_name": "nomic-ai/nomic-embed-text-v1.5",
+  "model_dims": 768,
+  "model_ctx_tokens": 8192,
+  "requires_prefix": true,
+  "query_prefix": "search_query: ",
+  "doc_prefix": "search_document: ",
+  "model_source": "collection_metadata",
+  "collection_name": "rag_pipeline",
+  "db_path": "G:\\scripts\\RAG_W_MCP\\chroma_db",
+  "collection_exists": true,
+  "collection_count": 181,
+  "current_doc": "blinkit_tnc_clean.md",
+  "current_doc_size": 116680,
+  "current_doc_band": "medium",
+  "current_structure": "structured",
+  "current_chunker": "structured",
+  "current_config": {
+    "max_chars": 1500,
+    "overlap_chars": 150,
+    "min_tokens": 80,
+    "max_tokens": 400,
+    "overlap_sentences": 2,
+    "drop_percentile": 75,
+    "k_fact": 3,
+    "k_summary": 6,
+    "k_compare": 4,
+    "k_conversational": 3,
+    "mmr_lambda": 0.7
+  },
+  "session_id": "15092ac6",
+  "session_started_at": "2026-03-27T23:18:52.335264",
+  "ingested_files": [
+    "blinkit_p_clean.md",
+    "blinkit_tnc_clean.md"
+  ],
+  "skipped_files": [],
+  "failed_files": [],
+  "total_chunks_added": 181,
+  "model_upgrade_warning": "",
+  "llm_tokens_used_deepseek": 0,
+  "llm_tokens_used_gpt": 0,
+  "llm_budget_gpt": 50000,
+  "llm_calls_by_task": {},
+  "enable_bm25": false,
+  "bm25_index": null
+}

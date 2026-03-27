@@ -1,7 +1,13 @@
-# LLMUnavailableError — raised when both primary and fallback models fail.
-# Typed error so callers can handle it specifically.
+"""
+Custom exception types for the LLM layer.
+"""
 
 
 class LLMUnavailableError(Exception):
-    """Raised when both primary and fallback LLM models are unavailable."""
+    """
+    Raised when both the primary and fallback LLM models fail.
+
+    Callers should catch this specifically and surface it as a 503 to the API layer
+    rather than letting it propagate as an unhandled exception.
+    """
     pass

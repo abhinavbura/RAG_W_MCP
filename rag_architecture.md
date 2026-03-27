@@ -13,7 +13,7 @@ Last updated: Tue Mar 24 2026 · Status: Ready to Build
 | ConversationTurn               | **Planned**   | query, intent, chunks, token_count, timestamp                          |
 | ConversationHistory            | **Planned**   | Rolling window, token budget, LLM compression fallback                 |
 | RetrievalResult                | **Planned**   | Typed return from retrieve() — 13 fields                               |
-| LLMRouter                      | **Planned**   | DeepSeek + GPT-4o mini, 3 routing triggers, budget tracking            |
+| LLMRouter                      | **Planned**   | OpenRouter (DeepSeek R1 + GPT-4o mini), 3 routing triggers, budget tracking|
 | detect_structure()             | **Done**      | Two-zone sampling, 5 heading heuristics, returns structured/flat       |
 | _is_heading_line()             | **Done**      | Markdown markers, numbered, ALL CAPS, Title Case, colon-terminated     |
 | _heading_level()               | **Done**      | Maps heuristic signals to level 1 (section) or level 2 (subsection)    |
@@ -54,7 +54,7 @@ A folder-ingestion RAG pipeline that auto-detects document structure, routes to 
 - Dynamic configuration — individual doc size drives chunk size and overlap. Live collection size drives k and MMR lambda at query time.
 - One embedding model per collection — selected from cumulative folder size at first ingest, then locked to collection metadata. Prevents vector space mismatch.
 - Crash recovery by design — PipelineState saved after every file. Hash store only updated after successful archive. Pipeline restarts exactly where it left off.
-- LLM cost split — simple structured tasks (extraction, classification fallback, history compression) routed to DeepSeek R1 free. User-facing answer generation routed to GPT-4o mini.
+- LLM cost split — simple structured tasks (extraction, classification fallback, history compression) routed to OpenRouter (`deepseek/deepseek-r1`). User-facing answer generation routed to OpenRouter (`openai/gpt-4o-mini`).
 - Expandable by layer — new capabilities added as MCP tools without touching FastAPI or React. Redis swapped in for JSON state without touching pipeline code.
 
 ## 2. Project Structure
@@ -445,7 +445,7 @@ LLMRouter is a standalone component. All LLM calls in the pipeline go through it
 
 ### 8.1 Model profiles
 
-|                      | DeepSeek R1 (free tier)                                   | GPT-4o mini                               |
+|                      | OpenRouter (`deepseek/deepseek-r1`)                       | OpenRouter (`openai/gpt-4o-mini`)         |
 |----------------------|-----------------------------------------------------------|-------------------------------------------|
 | Cost                 | Free                                                      | ~$0.15 / 1M input tokens                  |
 | Speed                | Slower                                                    | Fast                                      |

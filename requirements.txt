@@ -24,5 +24,10 @@ sse-starlette
 mcp
 python-dotenv
 
+# --- Tests ---
+pytest
+httpx
+
 # --- Phase 5 (optional) ---
 # rank-bm25
+einops
