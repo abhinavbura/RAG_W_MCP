@@ -185,3 +185,18 @@ node_modules/
 /frontend/node_modules/
 /frontend/dist/
 .DS_Store
+
+# ChromaDB Storage (keep directory, ignore contents)
+chroma_db/*
+!/chroma_db/.gitkeep
+
+# RAG Pipeline State
+/dataset/.rag_state.json
+/dataset/.rag_hashes.json
+
+# Chat History
+conversations.db
+
+# Uploaded documents (keep directory, ignore contents)
+/dataset/*
+!/dataset/.gitkeep

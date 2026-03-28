@@ -29,6 +29,31 @@ import backend.conversation_store as conv_store
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
+# Global queue for streaming server logs
+_log_queue: asyncio.Queue = asyncio.Queue()
+
+class AsyncLogQueueHandler(logging.Handler):
+    """Pushes log records to an asyncio.Queue for SSE streaming."""
+    def emit(self, record: logging.LogRecord):
+        # Ignore uvicorn access logs to avoid infinite loop / noise
+        if "uvicorn.access" in record.name:
+            return
+        try:
+            loop = asyncio.get_running_loop()
+            log_entry = {
+                "level": record.levelname,
+                "message": record.getMessage(),
+                "name": record.name
+            }
+            loop.call_soon_threadsafe(_log_queue.put_nowait, log_entry)
+        except Exception:
+            pass
+
+# Attach custom handler to the root logger
+_queue_handler = AsyncLogQueueHandler()
+_queue_handler.setLevel(logging.INFO)
+logging.getLogger().addHandler(_queue_handler)
+
 # ---------------------------------------------------------------------------
 # Paths
 # ---------------------------------------------------------------------------
@@ -163,6 +188,26 @@ async def ingest_progress(run_id: str):
                 break
             yield {"data": json.dumps(event)}
         _ingest_queues.pop(run_id, None)
+
+    return EventSourceResponse(event_generator())
+
+
+# ---------------------------------------------------------------------------
+# GET /logs/stream  (SSE)
+# ---------------------------------------------------------------------------
+
+@app.get("/logs/stream")
+async def logs_stream():
+    """Stream live server logs to the frontend via SSE."""
+    async def event_generator():
+        while True:
+            try:
+                # Use a small timeout so we can periodically check for client disconnects if needed
+                # However, await q.get() is usually fine as starlette handles disconnects.
+                event = await _log_queue.get()
+                yield {"data": json.dumps(event)}
+            except asyncio.CancelledError:
+                break
 
     return EventSourceResponse(event_generator())
 

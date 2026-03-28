@@ -5,6 +5,7 @@ import StateBadge from './components/StateBadge'
 import UploadZone from './components/UploadZone'
 import ProgressMonitor from './components/ProgressMonitor'
 import ChatInterface from './components/ChatInterface'
+import StatusBar from './components/StatusBar'
 
 function UploadPage() {
   const [runId, setRunId] = useState(null)
@@ -66,12 +67,14 @@ export default function App() {
       </header>
 
       {/* ── Page content ── */}
-      <main className="main-content">
+      <main className="main-content" style={{ paddingBottom: '32px' }}>
         <Routes>
           <Route path="/" element={<UploadPage />} />
           <Route path="/chat" element={<ChatInterface />} />
         </Routes>
       </main>
+
+      <StatusBar />
     </div>
   )
 }

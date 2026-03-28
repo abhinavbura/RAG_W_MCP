@@ -510,6 +510,56 @@ button {
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* ============================================================
+   Status Bar
+   ============================================================ */
+.status-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 32px;
+  background: var(--bg-elevated);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 var(--sp-4);
+  font-size: 0.75rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  z-index: 1000;
+  transition: background-color var(--transition);
+}
+
+.status-bar.error {
+  background: rgba(248, 113, 113, 0.15);
+  border-top-color: rgba(248, 113, 113, 0.3);
+  color: #fca5a5;
+}
+
+.status-content {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.status-name {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.status-bar.error .status-name {
+  color: #f87171;
+}
+
+.status-msg {
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ============================================================
    Utility
    ============================================================ */
 .text-muted { color: var(--text-muted); }
